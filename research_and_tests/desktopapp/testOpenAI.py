@@ -1,20 +1,27 @@
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from openai import OpenAI
+model = OpenAI()
 
-model = ChatOpenAI(model="gpt-4o-mini")
+
+def transcribe_audio(audio):
+	audio_file = open(audio, "rb")
+	transcription = model.audio.transcriptions.create(
+		model='whisper-1',
+		file=audio_file,
+		prompt="Transcribe the following audio clip, where the clip is always in chilean spanish. If you can separate the speakers, please do so.",
+	)
+
+	return transcription.text
+
+
 
 
 
 
 def main():
-	messages = [
-		HumanMessage("Hello! Who am i speaking to?"),
-	]
-
-	result = model.invoke(messages)
-
-	print(result)
-	return
+	audio = "clip2.wav"
+	transcription = transcribe_audio(audio)
+	print("Transcription:")
+	print(transcription)
 
 #Main
 if __name__ == "__main__":

@@ -42,6 +42,8 @@ if __name__ == '__main__':
 
 
 class Clip:
+    client = OpenAI()
+
     def __init__(self, clip_id, audio, time_start, time_end):
         self.clip_id = clip_id
         self.audio = audio
@@ -55,7 +57,14 @@ class Clip:
         self.summary = ''
 
     def transcribe_audio(self):
-        pass
+        audio_file = open(self.audio, "rb")
+        transcription = client.audio.transcriptions.create(
+            model='whisper-1',
+            file=audio_file,
+            prompt="Transcribe the following audio clip, where the clip is always in chilean spanish",
+        )
+
+        return transcription.text
 
     def extract_entities(self):
         pass
