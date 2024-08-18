@@ -1,17 +1,48 @@
 import sys
+import time
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QListWidget, QVBoxLayout, QWidget,
     QLabel, QListWidgetItem, QSplitter, QPushButton, QToolBar, QAction,
-    QStackedWidget, QHBoxLayout, QFormLayout, QLineEdit, QTextEdit, QCheckBox, QComboBox, QSpacerItem, QSizePolicy, QStackedLayout
+    QStackedWidget, QHBoxLayout, QFormLayout, QLineEdit, QTextEdit, QCheckBox, QSpacerItem, QSizePolicy, QStatusBar
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
+
+class RecordingThread(QThread):
+    recording_started = pyqtSignal()
+    recording_stopped = pyqtSignal()
+    
+    def __init__(self):
+        super().__init__()
+        self._is_running = False
+
+    def run(self):
+        self._is_running = True
+        self.recording_started.emit()
+        print("Recording started...")
+
+        # Simulate recording process
+        while self._is_running:
+            time.sleep(1)  # Simulate recording time delay
+
+        print("Recording stopped...")
+        self.recording_stopped.emit()
+
+    def stop(self):
+        self._is_running = False
 
 class ClipApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Clip Viewer")
         self.setGeometry(100, 100, 800, 600)
+
+        # Initialize recording thread
+        self.recording_thread = RecordingThread()
+
+        # Connect signals for recording start/stop
+        self.recording_thread.recording_started.connect(self.on_recording_started)
+        self.recording_thread.recording_stopped.connect(self.on_recording_stopped)
 
         # Create a stacked widget to manage different pages
         self.stacked_widget = QStackedWidget()
@@ -22,8 +53,43 @@ class ClipApp(QMainWindow):
 
         # Add toolbar for user profile button
         self.toolbar = QToolBar("User Profile Toolbar")
-        self.toolbar.setMovable(False)  # Optional: make toolbar unmovable
+        self.toolbar.setMovable(False)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
+
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        # Add a label to the status bar
+        self.status_label = QLabel("Ready")
+        self.status_bar.addWidget(self.status_label)
+
+        # Add a button to the status bar
+        self.status_button = QPushButton("R", self)
+        self.status_button.setStyleSheet("""
+            QPushButton {
+                background-color: red;
+                border-radius: 40px;
+                width: 40px;
+                height: 40px;
+            }
+            QPushButton:pressed {
+                background-color: green;
+            }
+        """)
+        self.status_button.setGeometry(750, 550, 40, 40)  # Adjust size and position
+        self.status_button.clicked.connect(self.toggle_recording)
+        self.status_bar.addPermanentWidget(self.status_button)
+
+
+
+
+
+
+
+
+
+
+
 
         # Create a user profile button in the toolbar
         user_profile_action = QAction(QIcon(), "Profile", self)
@@ -32,7 +98,7 @@ class ClipApp(QMainWindow):
 
         # Make the toolbar align to the right
         spacer = QWidget()
-        # spacer.setSizePolicy(QSpacerItem.Expanding, QSpacerItem.Fixed)
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.toolbar.addWidget(spacer)
         self.toolbar.addAction(user_profile_action)
 
@@ -61,7 +127,7 @@ class ClipApp(QMainWindow):
         # Add sidebar and main area to the splitter
         splitter.addWidget(self.date_list)
         splitter.addWidget(self.clip_display)
-        splitter.setStretchFactor(1, 1)  # Make the main area stretchable
+        splitter.setStretchFactor(1, 1)
 
         # Add the splitter to the main layout
         self.main_layout.addWidget(splitter)
@@ -78,15 +144,15 @@ class ClipApp(QMainWindow):
 
         # Add user information fields
         self.name_edit = QLineEdit(self)
-        self.name_edit.setText("John Doe")  # Pre-fill with example data
+        self.name_edit.setText("John Doe")
         form_layout.addRow("Name:", self.name_edit)
 
         self.email_edit = QLineEdit(self)
-        self.email_edit.setText("john.doe@example.com")  # Pre-fill with example data
+        self.email_edit.setText("john.doe@example.com")
         form_layout.addRow("Email:", self.email_edit)
 
         self.bio_edit = QTextEdit(self)
-        self.bio_edit.setText("This is a short bio about John Doe.")  # Pre-fill with example data
+        self.bio_edit.setText("This is a short bio about John Doe.")
         form_layout.addRow("Bio:", self.bio_edit)
 
         # Add the form layout to the profile page
@@ -109,6 +175,25 @@ class ClipApp(QMainWindow):
             "2024-08-14": ["Clip A", "Clip B"],
             "2024-08-13": ["Clip X", "Clip Y", "Clip Z"],
         }
+
+        # Add a recording button on the bottom right
+        # self.record_button = QPushButton(self)
+        # self.record_button.setStyleSheet("""
+        #     QPushButton {
+        #         background-color: red;
+        #         border-radius: 40px;
+        #         width: 40px;
+        #         height: 40px;
+        #     }
+        #     QPushButton:pressed {
+        #         background-color: green;
+        #     }
+        # """)
+        # self.record_button.setGeometry(750, 550, 40, 40)  # Adjust size and position
+        # self.record_button.clicked.connect(self.toggle_recording)
+
+        # State to track if recording is active
+        self.is_recording = False
 
     def load_clips(self, item):
         selected_date = item.text()
@@ -138,6 +223,47 @@ class ClipApp(QMainWindow):
         # Switch back to the main page
         self.stacked_widget.setCurrentWidget(self.main_page)
 
+    def toggle_recording(self):
+        if self.is_recording:
+            self.stop_recording()
+        else:
+            self.start_recording()
+
+    def start_recording(self):
+        # Start recording in a new thread
+        self.recording_thread.start()
+        self.is_recording = True
+        self.status_label.setText("Recording...")
+        self.status_button.setStyleSheet("""
+            QPushButton {
+                background-color: green;
+                border-radius: 20px;
+                width: 40px;
+                height: 40px;
+            }
+        """)
+
+    def stop_recording(self):
+        # Stop the recording thread
+        self.recording_thread.stop()
+        self.recording_thread.wait()  # Ensure the thread is fully stopped
+        self.is_recording = False
+        self.status_label.setText("Ready")
+        self.status_button.setStyleSheet("""
+            QPushButton {
+                background-color: red;
+                border-radius: 20px;
+                width: 40px;
+                height: 40px;
+            }
+        """)
+
+    def on_recording_started(self):
+        print("Recording started... (GUI update can be done here)")
+
+    def on_recording_stopped(self):
+        print("Recording stopped... (GUI update can be done here)")
+
 def main():
     app = QApplication(sys.argv)
     window = ClipApp()
@@ -146,8 +272,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
 
 
 # class Clip:
