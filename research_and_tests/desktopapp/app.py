@@ -34,7 +34,7 @@ class RecordingThread(QThread):
 class ClipApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Clip Viewer")
+        self.setWindowTitle("Clip Recorder")
         self.setGeometry(100, 100, 800, 600)
 
         # Initialize recording thread
@@ -60,7 +60,7 @@ class ClipApp(QMainWindow):
         self.setStatusBar(self.status_bar)
 
         # Add a label to the status bar
-        self.status_label = QLabel("Ready")
+        self.status_label = QLabel("  Ready")
         self.status_bar.addWidget(self.status_label)
 
         # Add a button to the status bar
@@ -68,7 +68,7 @@ class ClipApp(QMainWindow):
         self.status_button.setStyleSheet("""
             QPushButton {
                 background-color: red;
-                border-radius: 40px;
+                border-radius: 20px;
                 width: 40px;
                 height: 40px;
             }
@@ -233,7 +233,7 @@ class ClipApp(QMainWindow):
         # Start recording in a new thread
         self.recording_thread.start()
         self.is_recording = True
-        self.status_label.setText("Recording...")
+        self.status_label.setText("  Recording...")
         self.status_button.setStyleSheet("""
             QPushButton {
                 background-color: green;
@@ -248,7 +248,7 @@ class ClipApp(QMainWindow):
         self.recording_thread.stop()
         self.recording_thread.wait()  # Ensure the thread is fully stopped
         self.is_recording = False
-        self.status_label.setText("Ready")
+        self.status_label.setText("  Ready")
         self.status_button.setStyleSheet("""
             QPushButton {
                 background-color: red;
