@@ -206,7 +206,32 @@ class ClipApp(QMainWindow):
         # Set the stacked widget as the central widget
         self.setCentralWidget(self.stacked_widget)
 
+         # Clip details page
+        self.clip_details_page = QWidget()
+        self.clip_details_layout = QVBoxLayout(self.clip_details_page)
+        self.clip_details_label = QLabel("Clip Details", self.clip_details_page)
+        self.clip_details_layout.addWidget(self.clip_details_label)
 
+        # Play button
+        self.play_button = QPushButton("Play Clip", self.clip_details_page)
+        self.play_button.clicked.connect(self.play_clip)
+        self.clip_details_layout.addWidget(self.play_button)
+
+        # Transcribe button
+        self.transcribe_button = QPushButton("Transcribe Clip", self.clip_details_page)
+        self.transcribe_button.clicked.connect(self.transcribe_clip)
+        self.clip_details_layout.addWidget(self.transcribe_button)
+
+        # Label to display the transcription
+        self.transcription_label = QLabel("", self.clip_details_page)
+        self.clip_details_layout.addWidget(self.transcription_label)
+
+        # Back button to return to the main page
+        self.back_button = QPushButton("Back", self.clip_details_page)
+        self.back_button.clicked.connect(self.show_main_page)
+        self.clip_details_layout.addWidget(self.back_button)
+
+        self.stacked_widget.addWidget(self.clip_details_page)
 
 
         # State to track if recording is active
@@ -222,16 +247,48 @@ class ClipApp(QMainWindow):
             if widget_to_remove:
                 widget_to_remove.deleteLater()
 
-        # Show clips of selected date with checkboxes
+        # Show clips of selected date with clickable labels
         if clips:
             for clip in clips:
-                clip_checkbox = QCheckBox(clip, self)
-                self.clip_layout.addWidget(clip_checkbox)
+                clip_label = QLabel(clip, self)
+                clip_label.mousePressEvent = lambda event, name=clip: self.show_clip_details(name)
+                self.clip_layout.addWidget(clip_label)
         else:
             no_clips_label = QLabel("No clips available for this date", self)
             no_clips_label.setAlignment(Qt.AlignCenter)
             self.clip_layout.addWidget(no_clips_label)
 
+
+    def show_clip_details(self, clip_name):
+        # Update the details label with the clip's name
+        self.clip_details_label.setText(f"Details for {clip_name}")
+
+        # Assume the clip file is in the "clips" folder (you can adjust this path)
+        self.clip_file_path = os.path.join("clips", clip_name + ".wav")
+
+        # Clear the transcription label
+        self.transcription_label.setText("")
+
+        # Switch to the clip details page
+        self.stacked_widget.setCurrentWidget(self.clip_details_page)
+
+    def play_clip(self):
+        # Play the clip using pygame
+        if os.path.exists(self.clip_file_path):
+            pygame.mixer.music.load(self.clip_file_path)
+            pygame.mixer.music.play()
+        else:
+            self.clip_details_label.setText("Clip file not found!")
+
+    def transcribe_clip(self):
+        # Placeholder transcription logic (replace with actual transcription code)
+        transcription = f"Transcribed text of {os.path.basename(self.clip_file_path)}"
+        
+        # Update the transcription label with the transcribed text
+        self.transcription_label.setText(transcription)
+
+
+        
     def show_user_profile(self):
         # Switch to the profile page
         self.stacked_widget.setCurrentWidget(self.profile_page)
