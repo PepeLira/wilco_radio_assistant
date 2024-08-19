@@ -4,9 +4,10 @@ import time
 import os
 
 class ClipDivider:
-    def __init__(self, threshold, samplerate, channels=1, next_clip_margin=0.5, min_clip=1):
+    def __init__(self, threshold, samplerate, block_size, channels=1, next_clip_margin=0.5, min_clip=1):
         self.threshold = threshold
         self.samplerate = samplerate
+        self.block_size = block_size
         self.channels = channels
         self.next_clip_margin = next_clip_margin  # Time to wait before closing the clip
         self.min_clip = min_clip  # Minimum clip length in seconds
@@ -14,6 +15,7 @@ class ClipDivider:
         self.clip_start_time = None
         self.last_below_threshold_time = None
         self.in_clip = False
+        self.margin_cicles_count = 0 # To know how many blocks to remove
 
         # Ensure the clips/ directory exists
         self.clip_dir = 'clips'
@@ -27,35 +29,43 @@ class ClipDivider:
     def add_block(self, block):
         """Add an audio block and process it to detect clips."""
         rms = self.calculate_rms(block)
-        current_time = time.time()
+        block_duration = len(block) / self.samplerate # in seconds
 
         if rms > self.threshold:
             if not self.in_clip:
                 self.in_clip = True
-                self.clip_start_time = current_time
                 self.buffer = []
-
+            
+            self.margin_cicles_count = 0
             self.buffer.append(block)
             self.last_below_threshold_time = None  # Reset this since we are above the threshold
-
+        
         elif self.in_clip:
             if self.last_below_threshold_time is None:
-                self.last_below_threshold_time = current_time
+                self.last_below_threshold_time = block_duration
                 self.buffer.append(block)  # Continue adding blocks while waiting for next_clip_margin to pass
+                self.margin_cicles_count += 1
 
-            elif current_time - self.last_below_threshold_time <= self.next_clip_margin:
+            elif (self.last_below_threshold_time + block_duration) <= self.next_clip_margin:
                 self.buffer.append(block)  # Add the block within the margin time
+                self.last_below_threshold_time += block_duration
+                self.margin_cicles_count += 1
 
             else:
+                self.remove_margin_blocks()
                 self.close_clip()
                 self.in_clip = False
 
+    def remove_margin_blocks(self):
+        """Remove the margin blocks from the buffer."""
+        if self.margin_cicles_count > 0:
+            self.buffer = self.buffer[:-self.margin_cicles_count]
+
     def close_clip(self):
         """Close and save the clip if it meets the minimum length requirement."""
-        clip_length_in_seconds = len(self.buffer) * len(self.buffer[0]) / self.samplerate
-        if clip_length_in_seconds >= self.min_clip:
-            print(f"Audio clip length: {clip_length_in_seconds:.2f} seconds")
-            # Here you'd save the clip to a WAV file instead of just printing
+        self.clip_length_in_seconds = len(self.buffer) * self.block_size / self.samplerate
+        if self.clip_length_in_seconds >= self.min_clip:
+            print(f"Audio clip length: {self.clip_length_in_seconds:.2f} seconds")
             self.save_clip_to_wav()
         else:
             print("Clip discarded because it was too short.")
@@ -65,17 +75,19 @@ class ClipDivider:
         """Save the audio clip buffer to a WAV file."""
         # Generate a filename based on the current date and time
         timestamp = time.strftime('%Y%m%d_%H%M%S')
-        clip_time_seconds = int(time.time())
-        filename = os.path.join(self.clip_dir, f"clip_{timestamp}_{clip_time_seconds}.wav")
+        filename = os.path.join(self.clip_dir, f"clip_{timestamp}_{self.clip_length_in_seconds}.wav")
 
         audio_data = np.concatenate(self.buffer)
         audio_data_int = np.int16(audio_data * 32767)
 
+        # Using a try-finally block to ensure the file is closed properly
         with wave.open(filename, 'wb') as wf:
-            wf.setnchannels(self.channels)
-            wf.setsampwidth(2)  # Assuming 16-bit audio
-            wf.setframerate(self.samplerate)
-            wf.writeframes(audio_data_int.tobytes())
+            try:
+                wf.setnchannels(self.channels)
+                wf.setsampwidth(2)  # Assuming 16-bit audio
+                wf.setframerate(self.samplerate)
+                wf.writeframes(audio_data_int.tobytes())
+            finally:
+                wf.close()  # Ensures the file is closed properly even if an error occurs
         
         print(f"Clip saved as {filename}")
-

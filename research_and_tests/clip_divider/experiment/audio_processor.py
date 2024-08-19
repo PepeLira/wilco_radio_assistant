@@ -35,9 +35,12 @@ class AudioProcessor:
 
 # Example usage:
 if __name__ == '__main__':
+    import time
+
     # Initialize the audio input and clip divider classes
-    audio_input = AudioInput(blocksize=1024)
-    clip_divider = ClipDivider(threshold=0.005, samplerate=44100)
+    blocksize = 1024
+    audio_input = AudioInput(blocksize=blocksize)
+    clip_divider = ClipDivider(threshold=0.005, samplerate=44100, block_size=blocksize)
     
     # Create the main audio processor
     audio_processor = AudioProcessor(audio_input, clip_divider)
@@ -45,11 +48,7 @@ if __name__ == '__main__':
     # Start processing
     audio_processor.start()
 
-    test_time = 30 # seconds
-    
-    # Let it run for a certain period (e.g., test_time seconds)
-    import time
-    time.sleep(test_time)
+    time.sleep(30)
     
     # Stop processing
     audio_processor.stop()
