@@ -12,7 +12,7 @@ from PyQt5.QtGui import QIcon
 from audio_processor import AudioProcessor
 from audio_input import AudioInput
 from clip_divider import ClipDivider
-
+import pygame
 
 
 class RecordingThread(QThread):
@@ -28,6 +28,7 @@ class RecordingThread(QThread):
     def __init__(self):
         super().__init__()
         self._is_running = False
+        
 
     def run(self):
         self._is_running = True
@@ -50,9 +51,10 @@ class ClipApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("Clip Recorder")
         self.setGeometry(100, 100, 800, 600)
-
+        pygame.mixer.init()
         # Initialize recording thread
         self.recording_thread = RecordingThread()
+        self.is_playing = False
 
         # Connect signals for recording start/stop
         self.recording_thread.recording_started.connect(self.on_recording_started)
@@ -260,7 +262,12 @@ class ClipApp(QMainWindow):
 
 
     def show_clip_details(self, clip_name):
+
+        # Store the selected clip name
+        self.selected_clip_name = f'clips/{clip_name}'
+
         # Update the details label with the clip's name
+        
         self.clip_details_label.setText(f"Details for {clip_name}")
 
         # Assume the clip file is in the "clips" folder (you can adjust this path)
@@ -273,22 +280,33 @@ class ClipApp(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.clip_details_page)
 
     def play_clip(self):
-        # Play the clip using pygame
-        if os.path.exists(self.clip_file_path):
-            pygame.mixer.music.load(self.clip_file_path)
-            pygame.mixer.music.play()
+        # Assume the clip file is in the "clips" folder (you can adjust this path)
+        clip_file_path = self.selected_clip_name
+
+        if self.is_playing:
+            # Stop the clip if it's currently playing
+            pygame.mixer.music.stop()
+            self.is_playing = False
+            self.play_button.setText("Play Clip")
         else:
-            self.clip_details_label.setText("Clip file not found!")
+            # Play the clip if it's not currently playing
+            if os.path.exists(clip_file_path):
+                pygame.mixer.music.load(clip_file_path)
+                pygame.mixer.music.play()
+                self.is_playing = True
+                self.play_button.setText("Stop Clip")
+            else:
+                self.clip_details_label.setText("Clip file not found!")
 
     def transcribe_clip(self):
         # Placeholder transcription logic (replace with actual transcription code)
-        transcription = f"Transcribed text of {os.path.basename(self.clip_file_path)}"
+        transcription = f"Transcribed text of {os.path.basename(self.selected_clip_name)}"
         
         # Update the transcription label with the transcribed text
         self.transcription_label.setText(transcription)
 
 
-        
+
     def show_user_profile(self):
         # Switch to the profile page
         self.stacked_widget.setCurrentWidget(self.profile_page)
