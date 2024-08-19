@@ -1,5 +1,7 @@
 import sys
 import time
+import os
+import datetime
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QListWidget, QVBoxLayout, QWidget,
     QLabel, QListWidgetItem, QSplitter, QPushButton, QToolBar, QAction,
@@ -123,7 +125,30 @@ class ClipApp(QMainWindow):
         self.date_list.itemClicked.connect(self.load_clips)
 
         # Add some dummy dates for testing
-        dates = ["2024-08-15", "2024-08-14", "2024-08-13"]
+        dates = []
+        self.clip_data = {}
+
+        # Specify the folder path
+        folder_path = "clips"
+
+        # Get a list of all files and directories in the folder
+        file_names = os.listdir(folder_path)
+        file_names = [f for f in file_names if os.path.isfile(os.path.join(folder_path, f))]
+
+
+        # Real clip data from clips folder
+        for name in file_names:
+            clip = name.split("_")
+            date = clip[1]
+            date = datetime.datetime.strptime(date, "%Y%m%d").date()
+            date = date.strftime("%d/%m/%Y")
+            if date not in dates:
+                dates.append(date)
+                self.clip_data[date] = [name]
+            else:
+                self.clip_data[date].append(name)
+            
+
         for date in dates:
             QListWidgetItem(date, self.date_list)
 
@@ -181,28 +206,8 @@ class ClipApp(QMainWindow):
         # Set the stacked widget as the central widget
         self.setCentralWidget(self.stacked_widget)
 
-        # Dummy clip data
-        self.clip_data = {
-            "2024-08-15": ["Clip 1", "Clip 2", "Clip 3"],
-            "2024-08-14": ["Clip A", "Clip B"],
-            "2024-08-13": ["Clip X", "Clip Y", "Clip Z"],
-        }
 
-        # Add a recording button on the bottom right
-        # self.record_button = QPushButton(self)
-        # self.record_button.setStyleSheet("""
-        #     QPushButton {
-        #         background-color: red;
-        #         border-radius: 40px;
-        #         width: 40px;
-        #         height: 40px;
-        #     }
-        #     QPushButton:pressed {
-        #         background-color: green;
-        #     }
-        # """)
-        # self.record_button.setGeometry(750, 550, 40, 40)  # Adjust size and position
-        # self.record_button.clicked.connect(self.toggle_recording)
+
 
         # State to track if recording is active
         self.is_recording = False
