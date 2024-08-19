@@ -12,6 +12,7 @@ from PyQt5.QtGui import QIcon
 from audio_processor import AudioProcessor
 from audio_input import AudioInput
 from clip_divider import ClipDivider
+from clip import Clip
 import pygame
 
 
@@ -146,9 +147,12 @@ class ClipApp(QMainWindow):
             date = date.strftime("%d/%m/%Y")
             if date not in dates:
                 dates.append(date)
-                self.clip_data[date] = [name]
+                hours = int(clip[2][:2])
+                minutes = int(clip[2][2:4])
+                seconds = int(clip[2][4:])
+                self.clip_data[date] = [Clip(clip_id=name, author="John Doe", audio=name, time_start=datetime.time(hours, minutes, seconds))]
             else:
-                self.clip_data[date].append(name)
+                self.clip_data[date].append(Clip(clip_id=name, author="John Doe", audio=name, time_start=datetime.time(hours, minutes, seconds)))
             
 
         for date in dates:
@@ -252,7 +256,7 @@ class ClipApp(QMainWindow):
         # Show clips of selected date with clickable labels
         if clips:
             for clip in clips:
-                clip_label = QLabel(clip, self)
+                clip_label = QLabel(clip.clip_id, self)
                 clip_label.mousePressEvent = lambda event, name=clip: self.show_clip_details(name)
                 self.clip_layout.addWidget(clip_label)
         else:
@@ -261,17 +265,17 @@ class ClipApp(QMainWindow):
             self.clip_layout.addWidget(no_clips_label)
 
 
-    def show_clip_details(self, clip_name):
+    def show_clip_details(self, clip):
 
         # Store the selected clip name
-        self.selected_clip_name = f'clips/{clip_name}'
+        self.selected_clip_name = f'clips/{clip.audio}'
 
         # Update the details label with the clip's name
         
-        self.clip_details_label.setText(f"Details for {clip_name}")
+        self.clip_details_label.setText(f"Details for {clip.clip_id}")
 
         # Assume the clip file is in the "clips" folder (you can adjust this path)
-        self.clip_file_path = os.path.join("clips", clip_name + ".wav")
+        # self.clip_file_path = os.path.join("clips", clip_name + ".wav")
 
         # Clear the transcription label
         self.transcription_label.setText("")
@@ -282,6 +286,7 @@ class ClipApp(QMainWindow):
     def play_clip(self):
         # Assume the clip file is in the "clips" folder (you can adjust this path)
         clip_file_path = self.selected_clip_name
+        print(clip_file_path)
 
         if self.is_playing:
             # Stop the clip if it's currently playing
@@ -366,45 +371,7 @@ if __name__ == "__main__":
     main()
 
 
-# class Clip:
-#     client = OpenAI()
 
-#     def __init__(self, clip_id, audio, time_start, time_end):
-#         self.clip_id = clip_id
-#         self.audio = audio
-#         self.time_start = time_start
-#         self.time_end = time_end
-#         self.duration = time_end - time_start
-#         self.date = time_start.date()
-#         self.transcript = ''
-#         self.entities = []
-#         self.keywords = []
-#         self.summary = ''
-
-#     def transcribe_audio(self):
-#         audio_file = open(self.audio, "rb")
-#         transcription = client.audio.transcriptions.create(
-#             model='whisper-1',
-#             file=audio_file,
-#             prompt="Transcribe the following audio clip, where the clip is always in chilean spanish",
-#         )
-
-#         return transcription.text
-
-#     def extract_entities(self):
-#         pass
-
-#     def extract_keywords(self):
-#         pass
-
-#     def summarize(self):
-#         pass
-
-#     def __str__(self):
-#         return f'Clip {self.clip_id }: {self.time_start}-{self.time_end}'
-
-#     def __repr__(self):
-#         return f'Clip {self.clip_id }: {self.time_start}-{self.time_end}'
 
     
 
