@@ -1,5 +1,7 @@
 import sys
 import time
+import os
+import datetime
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QListWidget, QVBoxLayout, QWidget,
     QLabel, QListWidgetItem, QSplitter, QPushButton, QToolBar, QAction,
@@ -7,10 +9,21 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
+from audio_processor import AudioProcessor
+from audio_input import AudioInput
+from clip_divider import ClipDivider
+
+
 
 class RecordingThread(QThread):
     recording_started = pyqtSignal()
     recording_stopped = pyqtSignal()
+    # Initialize the audio input and clip divider classes
+    audio_input = AudioInput(blocksize=1024)
+    clip_divider = ClipDivider(threshold=0.005, samplerate=44100)
+    
+    # Create the main audio processor
+    audio_processor = AudioProcessor(audio_input, clip_divider)
     
     def __init__(self):
         super().__init__()
@@ -20,12 +33,13 @@ class RecordingThread(QThread):
         self._is_running = True
         self.recording_started.emit()
         print("Recording started...")
-
+        self.audio_processor.start()
         # Simulate recording process
         while self._is_running:
-            time.sleep(1)  # Simulate recording time delay
+            time.sleep(1)
 
         print("Recording stopped...")
+        self.audio_processor.stop()
         self.recording_stopped.emit()
 
     def stop(self):
@@ -34,7 +48,7 @@ class RecordingThread(QThread):
 class ClipApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Clip Viewer")
+        self.setWindowTitle("Clip Recorder")
         self.setGeometry(100, 100, 800, 600)
 
         # Initialize recording thread
@@ -60,7 +74,7 @@ class ClipApp(QMainWindow):
         self.setStatusBar(self.status_bar)
 
         # Add a label to the status bar
-        self.status_label = QLabel("Ready")
+        self.status_label = QLabel("  Ready")
         self.status_bar.addWidget(self.status_label)
 
         # Add a button to the status bar
@@ -68,7 +82,7 @@ class ClipApp(QMainWindow):
         self.status_button.setStyleSheet("""
             QPushButton {
                 background-color: red;
-                border-radius: 40px;
+                border-radius: 20px;
                 width: 40px;
                 height: 40px;
             }
@@ -111,7 +125,30 @@ class ClipApp(QMainWindow):
         self.date_list.itemClicked.connect(self.load_clips)
 
         # Add some dummy dates for testing
-        dates = ["2024-08-15", "2024-08-14", "2024-08-13"]
+        dates = []
+        self.clip_data = {}
+
+        # Specify the folder path
+        folder_path = "clips"
+
+        # Get a list of all files and directories in the folder
+        file_names = os.listdir(folder_path)
+        file_names = [f for f in file_names if os.path.isfile(os.path.join(folder_path, f))]
+
+
+        # Real clip data from clips folder
+        for name in file_names:
+            clip = name.split("_")
+            date = clip[1]
+            date = datetime.datetime.strptime(date, "%Y%m%d").date()
+            date = date.strftime("%d/%m/%Y")
+            if date not in dates:
+                dates.append(date)
+                self.clip_data[date] = [name]
+            else:
+                self.clip_data[date].append(name)
+            
+
         for date in dates:
             QListWidgetItem(date, self.date_list)
 
@@ -169,28 +206,8 @@ class ClipApp(QMainWindow):
         # Set the stacked widget as the central widget
         self.setCentralWidget(self.stacked_widget)
 
-        # Dummy clip data
-        self.clip_data = {
-            "2024-08-15": ["Clip 1", "Clip 2", "Clip 3"],
-            "2024-08-14": ["Clip A", "Clip B"],
-            "2024-08-13": ["Clip X", "Clip Y", "Clip Z"],
-        }
 
-        # Add a recording button on the bottom right
-        # self.record_button = QPushButton(self)
-        # self.record_button.setStyleSheet("""
-        #     QPushButton {
-        #         background-color: red;
-        #         border-radius: 40px;
-        #         width: 40px;
-        #         height: 40px;
-        #     }
-        #     QPushButton:pressed {
-        #         background-color: green;
-        #     }
-        # """)
-        # self.record_button.setGeometry(750, 550, 40, 40)  # Adjust size and position
-        # self.record_button.clicked.connect(self.toggle_recording)
+
 
         # State to track if recording is active
         self.is_recording = False
@@ -233,7 +250,7 @@ class ClipApp(QMainWindow):
         # Start recording in a new thread
         self.recording_thread.start()
         self.is_recording = True
-        self.status_label.setText("Recording...")
+        self.status_label.setText("  Recording...")
         self.status_button.setStyleSheet("""
             QPushButton {
                 background-color: green;
@@ -248,7 +265,7 @@ class ClipApp(QMainWindow):
         self.recording_thread.stop()
         self.recording_thread.wait()  # Ensure the thread is fully stopped
         self.is_recording = False
-        self.status_label.setText("Ready")
+        self.status_label.setText("  Ready")
         self.status_button.setStyleSheet("""
             QPushButton {
                 background-color: red;
