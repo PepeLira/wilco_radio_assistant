@@ -32,6 +32,8 @@ class ClipDivider:
         block_duration = len(block) / self.samplerate # in seconds
 
         if rms > self.threshold:
+            print("RMS:", rms)
+
             if not self.in_clip:
                 self.in_clip = True
                 self.buffer = []
@@ -75,6 +77,7 @@ class ClipDivider:
         """Save the audio clip buffer to a WAV file."""
         # Generate a filename based on the current date and time
         timestamp = time.strftime('%Y%m%d_%H%M%S')
+        self.clip_length_in_seconds = int(self.clip_length_in_seconds)
         filename = os.path.join(self.clip_dir, f"clip_{timestamp}_{self.clip_length_in_seconds}.wav")
 
         audio_data = np.concatenate(self.buffer)

@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # Initialize the audio input and clip divider classes
     blocksize = 1024
     audio_input = AudioInput(blocksize=blocksize)
-    clip_divider = ClipDivider(threshold=0.005, samplerate=44100, block_size=blocksize)
+    clip_divider = ClipDivider(threshold=0.01, samplerate=44100, block_size=blocksize)
     
     # Create the main audio processor
     audio_processor = AudioProcessor(audio_input, clip_divider)
