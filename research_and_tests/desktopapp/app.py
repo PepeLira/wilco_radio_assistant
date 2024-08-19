@@ -7,10 +7,21 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
+from audio_processor import AudioProcessor
+from audio_input import AudioInput
+from clip_divider import ClipDivider
+
+
 
 class RecordingThread(QThread):
     recording_started = pyqtSignal()
     recording_stopped = pyqtSignal()
+    # Initialize the audio input and clip divider classes
+    audio_input = AudioInput(blocksize=1024)
+    clip_divider = ClipDivider(threshold=0.005, samplerate=44100)
+    
+    # Create the main audio processor
+    audio_processor = AudioProcessor(audio_input, clip_divider)
     
     def __init__(self):
         super().__init__()
@@ -20,12 +31,13 @@ class RecordingThread(QThread):
         self._is_running = True
         self.recording_started.emit()
         print("Recording started...")
-
+        self.audio_processor.start()
         # Simulate recording process
         while self._is_running:
-            time.sleep(1)  # Simulate recording time delay
+            time.sleep(1)
 
         print("Recording stopped...")
+        self.audio_processor.stop()
         self.recording_stopped.emit()
 
     def stop(self):
