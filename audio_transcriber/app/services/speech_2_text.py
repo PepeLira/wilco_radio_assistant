@@ -5,6 +5,7 @@ import os
 
 class Speech2Text:
     def __init__(self, model_size=None, language="es"):
+        os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
         self.model_size = "large-v3" if model_size is None else model_size
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = WhisperModel(self.model_size, device=self.device, compute_type="int8")
@@ -15,11 +16,14 @@ class Speech2Text:
 
     def transcribe_clip(self, clip_path):
         segments, _ = self.model.transcribe(clip_path, beam_size=5, language=self.language)
-        transcript = ""
+        transcripts = []
         log_probs = []
         for segment in segments:
-            transcript += segment.text + " "
-            log_probs.append(segment.avg_logprob)
+            if segment.text not in transcripts:
+                transcripts.append(segment.text)
+                log_probs.append(segment.avg_logprob)
+
+        transcript = " ".join(transcripts)
         return transcript, self.transcript_score(log_probs)
 
     

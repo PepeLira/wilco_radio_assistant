@@ -13,6 +13,11 @@ class AudioProcessor:
         self.speech_to_text = speech_to_text
         self.running = False
         self.processed_files = set()
+        self.new_clip_paths = queue.Queue()
+
+    def update(self, clip_path):
+        """Add the new clip to the queue of clips to transcribe."""
+        self.new_clip_paths.put(clip_path)
 
     def process_audio(self):
         """Continuously process audio blocks until stopped."""
@@ -26,16 +31,17 @@ class AudioProcessor:
     def transcribe_new_clips(self):
         """Continuously check for new clips and transcribe them."""
         while self.running:
-            for filename in os.listdir(self.speech_to_text.clips_path):
-                file_path = os.path.join(self.speech_to_text.clips_path, filename)
-                if filename.endswith(".wav") and file_path not in self.processed_files:
+            try:
+                clip_path = self.new_clip_paths.get(timeout=1)  # Wait for a new clip path
+                if clip_path and clip_path.endswith(".wav") and clip_path not in self.processed_files:
                     # Transcribe the new audio file
-                    transcript, score = self.speech_to_text.transcribe_clip(file_path)
+                    transcript, score = self.speech_to_text.transcribe_clip(clip_path)
                     print(f"Transcribed: {transcript} with score: {score}")
 
                     # Mark file as processed
-                    self.processed_files.add(file_path)
-            time.sleep(1)  # Polling interval
+                    self.processed_files.add(clip_path)
+            except queue.Empty:
+                continue  # No new clip paths available
 
     def start(self):
         """Start the audio processing and transcription."""
@@ -70,10 +76,13 @@ if __name__ == '__main__':
     # Create the main audio processor
     audio_processor = AudioProcessor(audio_input, clip_divider, s2t)
     
+    clip_divider.add_observer(audio_processor)
+    
+    
     # Start processing
     audio_processor.start()
 
     # time.sleep(30)
     
     # Stop processing
-    audio_processor.stop()
+    #audio_processor.stop()

@@ -3,9 +3,11 @@ import wave
 import scipy.signal as signal
 import time
 import os
+from clip_notifier import ClipNotifier
 
-class ClipDivider:
+class ClipDivider(ClipNotifier):
     def __init__(self, threshold, samplerate, block_size, channels=1, next_clip_margin=0.5, min_clip=1):
+        super().__init__()
         self.threshold = threshold
         self.samplerate = samplerate
         self.block_size = block_size
@@ -97,17 +99,17 @@ class ClipDivider:
 
     def save_clip_to_wav(self):
         """Save the audio clip buffer to a WAV file."""
-        # Generate a filename based on the current date and time
+        # Generate a file_path based on the current date and time
         timestamp = time.strftime('%Y%m%d_%H%M%S')
         self.clip_length_in_seconds = int(self.clip_length_in_seconds)
-        filename = os.path.join(self.clip_dir, f"clip_{timestamp}_{self.clip_length_in_seconds}.wav")
+        file_path = os.path.join(self.clip_dir, f"clip_{timestamp}_{self.clip_length_in_seconds}.wav")
 
         audio_data = np.concatenate(self.buffer)
         # audio_data = self.bandpass_filter(audio_data)
         audio_data_int = np.int16(audio_data * 32767)
 
         # Using a try-finally block to ensure the file is closed properly
-        with wave.open(filename, 'wb') as wf:
+        with wave.open(file_path, 'wb') as wf:
             try:
                 wf.setnchannels(self.channels)
                 wf.setsampwidth(2)  # Assuming 16-bit audio
@@ -115,5 +117,6 @@ class ClipDivider:
                 wf.writeframes(audio_data_int.tobytes())
             finally:
                 wf.close()  # Ensures the file is closed properly even if an error occurs
-        
-        print(f"Clip saved as {filename}")
+        # Logic to create a clip
+        self.notify_observers(file_path)  # Notify observers about the new clip
+        print(f"Clip saved as {file_path}")
