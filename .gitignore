@@ -2,3 +2,5 @@
 *.wav
 __pycache__
 *.mp3
+.venv
+src/test.ipynb
