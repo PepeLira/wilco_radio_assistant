@@ -48,6 +48,15 @@ class RecordingThread(QThread):
         self._is_running = False
 
 class ClipApp(QMainWindow):
+
+    connection = psycopg2.connect(
+    dbname='wilco_db',
+    user='myuser',
+    password='mypassword',
+    host='localhost',
+    port='5432'
+    )
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Clip Recorder")
@@ -97,17 +106,6 @@ class ClipApp(QMainWindow):
         self.status_button.clicked.connect(self.toggle_recording)
         self.status_bar.addPermanentWidget(self.status_button)
 
-
-
-
-
-
-
-
-
-
-
-
         # Create a user profile button in the toolbar
         user_profile_action = QAction(QIcon(), "Profile", self)
         user_profile_action.triggered.connect(self.show_user_profile)
@@ -150,9 +148,13 @@ class ClipApp(QMainWindow):
                 hours = int(clip[2][:2])
                 minutes = int(clip[2][2:4])
                 seconds = int(clip[2][4:])
-                self.clip_data[date] = [Clip(clip_id=name, author="John Doe", audio=name, time_start=datetime.time(hours, minutes, seconds))]
+                with open(f"{folder_path}/{name}", "rb") as f:
+                    audio = f.read()
+                self.clip_data[date] = [Clip(clip_id=name, author="John Doe", audio=audio, time_start=datetime.time(hours, minutes, seconds))]
             else:
-                self.clip_data[date].append(Clip(clip_id=name, author="John Doe", audio=name, time_start=datetime.time(hours, minutes, seconds)))
+                with open(f"{folder_path}/{name}", "rb") as f:
+                    audio = f.read()
+                self.clip_data[date].append(Clip(clip_id=name, author="John Doe", audio=audio, time_start=datetime.time(hours, minutes, seconds)))
             
 
         for date in dates:
