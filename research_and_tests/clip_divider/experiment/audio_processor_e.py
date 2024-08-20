@@ -1,7 +1,7 @@
 import threading
 import queue
-from audio_input import AudioInput
-from clip_divider import ClipDivider
+from research_and_tests.clip_divider.experiment.audio_input_e import AudioInput
+from research_and_tests.clip_divider.experiment.clip_divider_e import ClipDivider
 
 class AudioProcessor:
     def __init__(self, audio_input, clip_divider):
