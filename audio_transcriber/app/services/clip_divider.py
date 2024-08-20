@@ -1,6 +1,6 @@
 import numpy as np
 import wave
-import signal
+import scipy.signal as signal
 import time
 import os
 
@@ -33,7 +33,7 @@ class ClipDivider:
         block_duration = len(block) / self.samplerate # in seconds
 
         if rms > self.threshold:
-            print("RMS:", rms)
+            # print("RMS:", rms)
 
             if not self.in_clip:
                 self.in_clip = True
@@ -103,7 +103,7 @@ class ClipDivider:
         filename = os.path.join(self.clip_dir, f"clip_{timestamp}_{self.clip_length_in_seconds}.wav")
 
         audio_data = np.concatenate(self.buffer)
-        audio_data = self.bandpass_filter(audio_data)
+        # audio_data = self.bandpass_filter(audio_data)
         audio_data_int = np.int16(audio_data * 32767)
 
         # Using a try-finally block to ensure the file is closed properly
