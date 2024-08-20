@@ -14,6 +14,7 @@ from audio_input import AudioInput
 from clip_divider import ClipDivider
 from clip import Clip
 import pygame
+import psycopg2
 
 
 class RecordingThread(QThread):
@@ -270,7 +271,7 @@ class ClipApp(QMainWindow):
     def show_clip_details(self, clip):
 
         # Store the selected clip name
-        self.selected_clip_name = f'clips/{clip.audio}'
+        self.selected_clip_name = f'clips/{clip.clip_id}'
 
         # Update the details label with the clip's name
         
