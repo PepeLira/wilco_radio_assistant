@@ -1,0 +1,13 @@
+<!-- templates/navbar.html -->
+
+<nav class="navbar">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <div class="container">
+        <a href="{% url 'home' %}" class="navbar-brand">WilCo</a>
+        <ul class="navbar-nav">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="#">About</a></li>
+        </ul>
+    </div>
+</nav>
