@@ -1,19 +1,20 @@
 import threading
 import queue
-from audio_input import AudioInput
-from clip_divider import ClipDivider
-from speech_2_text import Speech2Text
-import time
-import os
+from .audio_input import AudioInput
+from .clip_divider import ClipDivider
+from .speech_2_text import Speech2Text
 
 class AudioProcessor:
-    def __init__(self, audio_input, clip_divider, speech_to_text):
+    def __init__(self, audio_input, clip_divider, speech_to_text, user_controller, \
+                clip_controller):
         self.audio_input = audio_input
         self.clip_divider = clip_divider
         self.speech_to_text = speech_to_text
         self.running = False
         self.processed_files = set()
         self.new_clip_paths = queue.Queue()
+        self.clip_controller = clip_controller
+        self.user_controller = user_controller
 
     def update(self, clip_path):
         """Add the new clip to the queue of clips to transcribe."""
@@ -35,8 +36,11 @@ class AudioProcessor:
                 clip_path = self.new_clip_paths.get(timeout=1)  # Wait for a new clip path
                 if clip_path and clip_path.endswith(".wav") and clip_path not in self.processed_files:
                     # Transcribe the new audio file
-                    transcript, score = self.speech_to_text.transcribe_clip(clip_path)
-                    print(f"Transcribed: {transcript} with score: {score}")
+                    clip_data = self.speech_to_text.transcribe_clip(clip_path)
+                    clip_data["admin_user"] = self.user_controller.get_admin_user(email="admin")
+                    # Add the clip to the database
+                    self.clip_controller.add_audio_clip(clip_data)
+                    print("Transcription complete:", clip_data)
 
                     # Mark file as processed
                     self.processed_files.add(clip_path)
@@ -68,9 +72,8 @@ if __name__ == '__main__':
     import time
 
     # Initialize the audio input and clip divider classes
-    blocksize = 1024
-    audio_input = AudioInput(blocksize=blocksize)
-    clip_divider = ClipDivider(threshold=0.01, samplerate=44100, block_size=blocksize)
+    audio_input = AudioInput()
+    clip_divider = ClipDivider()
     s2t = Speech2Text()
     
     # Create the main audio processor

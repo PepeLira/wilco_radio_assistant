@@ -3,10 +3,11 @@ import wave
 import scipy.signal as signal
 import time
 import os
-from clip_notifier import ClipNotifier
+from .clip_notifier import ClipNotifier
 
 class ClipDivider(ClipNotifier):
-    def __init__(self, threshold, samplerate, block_size, channels=1, next_clip_margin=0.5, min_clip=1):
+    def __init__(self, threshold=0.01, samplerate=44100, block_size=1024, channels=1, \
+                 next_clip_margin=0.5, min_clip=1):
         super().__init__()
         self.threshold = threshold
         self.samplerate = samplerate
