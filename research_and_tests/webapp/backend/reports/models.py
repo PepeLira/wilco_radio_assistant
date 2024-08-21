@@ -1,12 +1,13 @@
 from django.db import models
-from clips.models import Clip, Author
+from clips.models import Clip
+from accounts.models import Author
 
 # Create your models here.
 
 class Report(models.Model):
     report_id = models.CharField(max_length=255, primary_key=True)
     audio_clips = models.ManyToManyField('clips.Clip')
-    author = models.ForeignKey('clips.Author', on_delete=models.CASCADE)
+    author = models.ForeignKey('accounts.Author', on_delete=models.CASCADE)
     summary = models.TextField()
     report_objective = models.ForeignKey('ReportObjective', on_delete=models.CASCADE)
     date = models.DateField()

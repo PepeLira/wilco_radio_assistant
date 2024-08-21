@@ -1,20 +1,6 @@
 from django.db import models
+from accounts.models import Author
 
-class Author(models.Model):
-    name = models.CharField(max_length=255)
-    email = models.EmailField()
-    bio = models.TextField()
-
-    def __init__(self, name, email, bio):
-        self.name = name
-        self.email = email
-        self.bio = bio
-
-    def __str__(self):
-        return f'Author {self.name}'
-
-    def __repr__(self):
-        return f'Author {self.name}'
 
 class Clip(models.Model):
     clip_id = models.CharField(max_length=255, primary_key=True)
