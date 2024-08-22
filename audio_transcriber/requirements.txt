@@ -3,4 +3,3 @@ numpy==1.26.3
 peewee==3.17.6
 scipy==1.14.0
 sounddevice==0.5.0
-torch==2.4.0+cu124
