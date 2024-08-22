@@ -1,6 +1,5 @@
 from app.models.audio_clip import AudioClip
 from peewee import DoesNotExist
-import pdb
 
 class AudioClipController:
     def __init__(self, current_user, view):
@@ -110,14 +109,14 @@ class AudioClipController:
         self.current_date = date
         clips = self.get_clips_by_date(date)
         for clip in clips:
-            time = f"{clip.time_start.strftime("%H:%M:%S")} - {clip.time_end.strftime("%H:%M:%S")}"
+            time = f"{clip.time_start.strftime('%H:%M:%S')} - {clip.time_end.strftime('%H:%M:%S')}"
             self.view.add_transcription(clip.transcription, time)
 
     def show_new_clip(self, clip_id):
         """Update the view when a new clip is added."""
         self.show_clip_dates()
         clip = self.get_audio_clip(clip_id)
-        time = f"{clip.time_start.strftime("%H:%M:%S")} - {clip.time_end.strftime("%H:%M:%S")}"
+        time = f"{clip.time_start.strftime('%H:%M:%S')} - {clip.time_end.strftime('%H:%M:%S')}"
         self.view.add_transcription(clip.transcription, time)
 
     def show_search_transcriptions(self, search_query):
@@ -125,6 +124,6 @@ class AudioClipController:
         self.view.clear_transcription_table()
         clips = self.search_clips(search_query)
         for clip in clips:
-            time = f"{clip.time_start.strftime("%H:%M:%S")} - {clip.time_end.strftime("%H:%M:%S")}"
+            time = f"{clip.time_start.strftime('%H:%M:%S')} - {clip.time_end.strftime('%H:%M:%S')}"
             self.view.add_transcription(clip.transcription, time)
 
