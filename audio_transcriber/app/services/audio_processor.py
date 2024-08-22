@@ -37,7 +37,7 @@ class AudioProcessor:
                 if clip_path and clip_path.endswith(".wav") and clip_path not in self.processed_files:
                     # Transcribe the new audio file
                     clip_data = self.speech_to_text.transcribe_clip(clip_path)
-                    clip_data["admin_user"] = self.user_controller.get_admin_user(email="admin")
+                    clip_data["admin_user"] = self.clip_controller.current_user
                     # Add the clip to the database
                     self.clip_controller.add_audio_clip(clip_data)
                     print("Transcription complete:", clip_data)
