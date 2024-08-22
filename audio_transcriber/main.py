@@ -18,7 +18,7 @@ def main():
     audio_input = AudioInput()
     clip_divider = ClipDivider()
     speech2text = Speech2Text()
-
+    print("Preparing the UI...")
     # Start the UI
     app = QApplication(sys.argv)
     ui = MainUI()
@@ -41,10 +41,12 @@ def main():
     ui.set_stop_button_callback(audio_processor.stop)
     
     ui.show()
+    print("All set!")
 
     clip_controller.show_start_data()
+
     if sys.flags.interactive != 1:
-        close_db()
+        app.aboutToQuit.connect(close_db)
         sys.exit(app.exec_())
 
 if __name__ == '__main__':

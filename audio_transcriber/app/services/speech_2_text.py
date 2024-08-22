@@ -42,7 +42,7 @@ class Speech2Text:
         date, time_start, duration = file_name.split("_")[1:]
         time_start = time_start[:2] + ":" + time_start[2:4] + ":" + time_start[4:]
         time_start_datetime = datetime.datetime.strptime(time_start, "%H:%M:%S")
-        duration = float(duration.split(".")[0])
+        duration = float(duration.split(".")[0].replace("#", "."))
         duration_datetime = datetime.timedelta(seconds=duration)
         time_end = (time_start_datetime + duration_datetime).strftime("%H:%M:%S")
         date = date[:4] + "/" + date[4:6] + "/" + date[6:]

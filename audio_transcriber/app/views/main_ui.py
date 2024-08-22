@@ -1,7 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QListWidget
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QPushButton
-from PyQt5.QtGui import QPixmap
 
 class MainUI(QWidget):
     def __init__(self):
@@ -38,16 +37,6 @@ class MainUI(QWidget):
         self.header_label.setStyleSheet(f"font-size: {self.header_font_size}; font-weight: {self.header_font_weight};")
         header_layout.addWidget(self.header_label)
 
-        # Right header layout (user icon and logo)
-        right_header_layout = QHBoxLayout()
-        self.user_icon = QLabel()
-        user_pixmap = QPixmap('path_to_user_icon.png')  # Replace with the path to your user icon image
-        self.user_icon.setPixmap(user_pixmap.scaled(self.icon_size, self.icon_size))
-        right_header_layout.addWidget(self.user_icon)
-
-        header_layout.addLayout(right_header_layout)
-        header_layout.addStretch(1)
-
         layout.addLayout(header_layout)
 
     def init_content(self, layout):
@@ -73,9 +62,19 @@ class MainUI(QWidget):
         search_layout = QHBoxLayout()
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.textChanged.connect(self.search_text_changed)
         search_layout.addWidget(self.search_bar)
 
         layout.addLayout(search_layout)
+    
+    def set_search_callback(self, search_callback):
+        """Set the callback for the search bar."""
+        self.search_callback = search_callback
+
+    def search_text_changed(self, text):
+        """Slot method to handle search bar text changes."""
+        text = self.search_bar.text().lower()
+        self.search_callback(text)
 
     def add_dates_list(self, layout):
         self.dates_list = QListWidget()
@@ -87,6 +86,7 @@ class MainUI(QWidget):
         self.transcription_table.setHorizontalHeaderLabels(["Transcription", "Time"])
         self.transcription_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.transcription_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.transcription_table.verticalHeader().setVisible(False)
         self.transcription_table.setFrameStyle(QFrame.NoFrame)
         layout.addWidget(self.transcription_table)
 
@@ -101,11 +101,10 @@ class MainUI(QWidget):
         self.dates_list.addItem("📅 " + date_str)
 
     def add_transcription(self, transcription, time):
-        """Add a transcription to the transcription table."""
-        row_position = self.transcription_table.rowCount()
-        self.transcription_table.insertRow(row_position)
-        self.transcription_table.setItem(row_position, 0, QTableWidgetItem(transcription))
-        self.transcription_table.setItem(row_position, 1, QTableWidgetItem(time))
+        """Add a transcription to the top of the transcription table."""
+        self.transcription_table.insertRow(0)
+        self.transcription_table.setItem(0, 0, QTableWidgetItem(transcription))
+        self.transcription_table.setItem(0, 1, QTableWidgetItem(time))
 
     def add_bottom_record_bar(self, layout):
         """Add a bottom bar with buttons."""

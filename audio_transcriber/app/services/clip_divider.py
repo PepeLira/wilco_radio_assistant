@@ -7,7 +7,7 @@ from .clip_notifier import ClipNotifier
 
 class ClipDivider(ClipNotifier):
     def __init__(self, threshold=0.01, samplerate=44100, block_size=1024, channels=1, \
-                 next_clip_margin=0.5, min_clip=1):
+                 next_clip_margin=0.5, min_clip=0.7):
         super().__init__()
         self.threshold = threshold
         self.samplerate = samplerate
@@ -102,7 +102,7 @@ class ClipDivider(ClipNotifier):
         """Save the audio clip buffer to a WAV file."""
         # Generate a file_path based on the current date and time
         timestamp = time.strftime('%Y%m%d_%H%M%S')
-        self.clip_length_in_seconds = int(self.clip_length_in_seconds)
+        self.clip_length_in_seconds = str(round(self.clip_length_in_seconds, 2)).replace(".", "#")
         file_path = os.path.join(self.clip_dir, f"clip_{timestamp}_{self.clip_length_in_seconds}.wav")
 
         audio_data = np.concatenate(self.buffer)
