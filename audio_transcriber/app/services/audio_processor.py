@@ -39,7 +39,7 @@ class AudioProcessor:
                     clip_data = self.speech_to_text.transcribe_clip(clip_path)
                     clip_data["admin_user"] = self.clip_controller.current_user
                     # Add the clip to the database
-                    print(self.clip_controller.add_audio_clip(clip_data))
+                    self.clip_controller.add_audio_clip(clip_data)
                     print("Transcription complete:", clip_data)
 
                     # Mark file as processed

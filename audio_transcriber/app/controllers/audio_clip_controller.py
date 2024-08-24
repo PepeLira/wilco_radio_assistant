@@ -1,10 +1,13 @@
 from app.models.audio_clip import AudioClip
+from app.services.api_interface import ApiInterface
 from peewee import DoesNotExist
 
 class AudioClipController:
     def __init__(self, current_user, view):
         self.current_user = current_user
         self.view = view
+        self.current_date = None
+        self.api_interface = ApiInterface()
 
     def add_audio_clip(self, data):
         """Add a new AudioClip to the database."""
@@ -22,6 +25,7 @@ class AudioClipController:
                 file_path=data["file_path"]
             )
             self.show_new_clip(clip.id)
+            self.api_interface.post_clip(clip)
             return clip
         except Exception as e:
             print(f"Error adding audio clip: {e}")
