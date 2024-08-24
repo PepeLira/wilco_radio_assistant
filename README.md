@@ -4,7 +4,7 @@ Wilco es un servicio compuesto por una red multimodal que combine un modelo de s
 
 Preliminarmente esta pensado en dos aplicaciones:
 
-- RadioTranscriptor: Aplicación de escritorio modelo Speach to Text.
+- RadioTranscriptor: Aplicación de escritorio modelo Speech to Text.
 - RadioGPT: Aplicación Web LLM + Panel de control para informes y comandos.
 
 ---
