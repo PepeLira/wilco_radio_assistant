@@ -32,6 +32,8 @@ void set_gain_mode(int sockfd, uint8_t mode);
 void set_agc_mode(int sockfd, uint8_t mode);
 void fm_demodulate(const std::vector<std::complex<float>> &iq_samples, std::vector<float> &audio_samples);
 void write_wav_file(const std::string &filename, const std::vector<float> &audio_data, int sample_rate);
+void set_rtl_agc_mode(int sockfd, uint8_t mode);
+void set_gain(int sockfd, uint32_t gain);
 
 int main() {
     // Register signal handler for graceful shutdown
@@ -46,13 +48,15 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    // Configure SDR settings
+        // Configure SDR settings
     uint32_t sample_rate = 2048000;    // Sample rate in Hz
-    uint32_t center_freq = 88900000;  // Center frequency in Hz (adjust to a local FM station)
+    uint32_t center_freq = 88900000;  // Center frequency in Hz
     set_sample_rate(sockfd, sample_rate);
     set_center_freq(sockfd, center_freq);
-    set_gain_mode(sockfd, 0);  // 0 = auto gain, 1 = manual gain
-    set_agc_mode(sockfd, 1);   // 0 = off, 1 = on
+    set_gain_mode(sockfd, 1);          // Manual gain mode
+    set_gain(sockfd, 360);             // Set tuner gain to 36.0 dB
+    set_agc_mode(sockfd, 0);           // Disable tuner AGC
+    set_rtl_agc_mode(sockfd, 1);       // Enable RTL AGC
 
     // Prepare to receive and process data
     int audio_rate = 44100;  // Audio sample rate
@@ -218,3 +222,15 @@ void write_wav_file(const std::string &filename, const std::vector<float> &audio
     sf_close(outfile);
 }
 
+
+// Add the function to set RTL AGC mode
+void set_rtl_agc_mode(int sockfd, uint8_t mode) {
+    send_command(sockfd, 0x0A, mode);
+    std::cout << "Set RTL AGC mode to " << (mode == 0 ? "off" : "on") << std::endl;
+}
+
+// Add the function to set tuner gain
+void set_gain(int sockfd, uint32_t gain) {
+    send_command(sockfd, 0x04, gain);
+    std::cout << "Set tuner gain to " << gain / 10.0 << " dB" << std::endl;
+}
