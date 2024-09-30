@@ -14,8 +14,7 @@
 
 // Librerías externas
 #include <sndfile.h>  // Para escribir archivos WAV
-#include <fftw3.h>    // Para FFT (opcional, no se utiliza en este ejemplo)
-#include <samplerate.h> // Para re-muestreo de audio
+// #include <samplerate.h> // Comentado: No se usará
 
 #define BUFFER_SIZE 16384  // Tamaño del búfer en bytes
 #define DE_EMPHASIS_TIME_CONSTANT 75e-6  // Constante de tiempo para de-énfasis (75 µs para América)
@@ -156,6 +155,23 @@ bool connect_to_server(int &sockfd, const std::string &ip, int port) {
 
     std::cout << "Conexión establecida." << std::endl;
     return true;
+}
+
+void resample_audio(const std::vector<float> &input_samples, std::vector<float> &output_samples, float input_rate, float output_rate) {
+    float resample_ratio = output_rate / input_rate;
+    size_t output_size = static_cast<size_t>(input_samples.size() * resample_ratio);
+    output_samples.resize(output_size);
+
+    for (size_t i = 0; i < output_size; ++i) {
+        float t = i / resample_ratio;
+        size_t idx = static_cast<size_t>(t);
+        if (idx + 1 < input_samples.size()) {
+            float frac = t - idx;
+            output_samples[i] = input_samples[idx] * (1.0f - frac) + input_samples[idx + 1] * frac;
+        } else {
+            output_samples[i] = input_samples.back();
+        }
+    }
 }
 
 void send_command(int sockfd, uint8_t cmd, uint32_t param) {
