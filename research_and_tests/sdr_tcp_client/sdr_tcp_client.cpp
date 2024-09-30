@@ -14,7 +14,7 @@
 
 // Librerías externas
 #include <sndfile.h>  // Para escribir archivos WAV
-// #include <samplerate.h> // Comentado: No se usará
+// #include <samplerate.h> // Eliminado: No se usará
 
 #define BUFFER_SIZE 16384  // Tamaño del búfer en bytes
 #define DE_EMPHASIS_TIME_CONSTANT 75e-6  // Constante de tiempo para de-énfasis (75 µs para América)
@@ -157,23 +157,6 @@ bool connect_to_server(int &sockfd, const std::string &ip, int port) {
     return true;
 }
 
-void resample_audio(const std::vector<float> &input_samples, std::vector<float> &output_samples, float input_rate, float output_rate) {
-    float resample_ratio = output_rate / input_rate;
-    size_t output_size = static_cast<size_t>(input_samples.size() * resample_ratio);
-    output_samples.resize(output_size);
-
-    for (size_t i = 0; i < output_size; ++i) {
-        float t = i / resample_ratio;
-        size_t idx = static_cast<size_t>(t);
-        if (idx + 1 < input_samples.size()) {
-            float frac = t - idx;
-            output_samples[i] = input_samples[idx] * (1.0f - frac) + input_samples[idx + 1] * frac;
-        } else {
-            output_samples[i] = input_samples.back();
-        }
-    }
-}
-
 void send_command(int sockfd, uint8_t cmd, uint32_t param) {
     uint8_t buffer[5];
     buffer[0] = cmd;
@@ -253,28 +236,20 @@ void apply_de_emphasis(std::vector<float> &audio_samples, float sample_rate) {
 }
 
 void resample_audio(const std::vector<float> &input_samples, std::vector<float> &output_samples, float input_rate, float output_rate) {
-    SRC_DATA src_data;
-    src_data.data_in = input_samples.data();
-    src_data.input_frames = input_samples.size();
-    src_data.data_out = nullptr;
-    src_data.output_frames = 0;
-    src_data.src_ratio = output_rate / input_rate;
-    src_data.end_of_input = 0;
+    float resample_ratio = output_rate / input_rate;
+    size_t output_size = static_cast<size_t>(input_samples.size() * resample_ratio);
+    output_samples.resize(output_size);
 
-    // Calcular el tamaño necesario para la salida
-    size_t max_output_frames = static_cast<size_t>(input_samples.size() * src_data.src_ratio) + 1;
-    output_samples.resize(max_output_frames);
-    src_data.data_out = output_samples.data();
-    src_data.output_frames = max_output_frames;
-
-    int error = src_simple(&src_data, SRC_SINC_FASTEST, 1);
-    if (error) {
-        std::cerr << "Error en resample_audio: " << src_strerror(error) << std::endl;
-        return;
+    for (size_t i = 0; i < output_size; ++i) {
+        float t = i / resample_ratio;
+        size_t idx = static_cast<size_t>(t);
+        if (idx + 1 < input_samples.size()) {
+            float frac = t - idx;
+            output_samples[i] = input_samples[idx] * (1.0f - frac) + input_samples[idx + 1] * frac;
+        } else {
+            output_samples[i] = input_samples.back();
+        }
     }
-
-    // Ajustar el tamaño del vector de salida al número real de muestras generadas
-    output_samples.resize(src_data.output_frames_gen);
 }
 
 void write_wav_file(const std::string &filename, const std::vector<float> &audio_data, int sample_rate) {
@@ -311,4 +286,3 @@ void write_wav_file(const std::string &filename, const std::vector<float> &audio
 
     sf_close(outfile);
 }
-
